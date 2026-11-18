@@ -1,0 +1,15 @@
+# Données locales (vidéos, base, clés)
+data/
+.env
+.env.local
+*.db
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# Node
+node_modules/
+frontend/.next/
+frontend/out/
+.DS_Store
