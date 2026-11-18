@@ -127,6 +127,8 @@ class Runner:
         src = course["media_path"]
         workdir = course_dir(cid)
         workdir.mkdir(parents=True, exist_ok=True)
+        if not Path(src).exists():
+            raise FileNotFoundError("Le fichier du cours est introuvable (supprimé ou déplacé). Réimporte-le.")
 
         # 1. probe
         if steps.get("probe") != "done":

@@ -68,3 +68,23 @@ def test_frame_capture(video, tmp_path):
 
 def test_slide_ranges():
     assert slides.slide_ranges([0, 10, 30], 50) == [(0, 10), (10, 30), (30, 50)]
+
+
+def test_hallucinations_filtered_and_uncertain_flag():
+    from studyai.pipeline import transcribe as tr
+    segs = [tr.Segment(0, 2, "Sous-titrage ST' 501", -0.5, 0.8), tr.Segment(2, 4, "Le bilan", -0.2, 0.01),
+            tr.Segment(4, 6, "mot flou", -1.3, 0.1), tr.Segment(6, 7, "  ", -0.1, 0.1)]
+    out = tr._clean(segs, offset=100)
+    assert [s.text for s in out] == ["Le bilan", "mot flou"]
+    assert out[0].start == 102 and not out[0].uncertain and out[1].uncertain
+
+
+def test_model_download_error_is_explained(monkeypatch):
+    from studyai.pipeline import transcribe as tr
+
+    def boom(engine, model):
+        raise OSError("403 Forbidden for url https://huggingface.co/x")
+    monkeypatch.setattr(tr, "_factory_override", boom)
+    import pytest
+    with pytest.raises(RuntimeError, match="connexion Internet"):
+        tr.transcribe_chunk(np.zeros(16000, np.float32), 0, "auto", "turbo", None, None)

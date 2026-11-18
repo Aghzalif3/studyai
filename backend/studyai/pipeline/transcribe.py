@@ -189,7 +189,16 @@ def get_engine(engine: str, model: str) -> Engine:
 
 def transcribe_chunk(audio: np.ndarray, offset: float, engine: str, model: str,
                      language: str | None, prompt: str | None) -> TranscriptResult:
-    eng = get_engine(engine, model)
-    res = eng.transcribe(audio, language, prompt)
+    try:
+        eng = get_engine(engine, model)
+        res = eng.transcribe(audio, language, prompt)
+    except Exception as e:  # noqa: BLE001
+        text = f"{type(e).__name__} {e}".lower()
+        if any(k in text for k in ("forbidden", "connection", "huggingface", "http", "entrynotfound", "resolve", "timed out")):
+            raise RuntimeError(
+                f"Impossible de télécharger le modèle Whisper « {model} ». Une connexion Internet est nécessaire "
+                f"au premier usage (≈ 1,6 Go pour turbo), ensuite tout fonctionne hors ligne. Détail : {e}"
+            ) from e
+        raise
     res.segments = _clean(res.segments, offset)
     return res
